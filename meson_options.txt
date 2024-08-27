@@ -2,17 +2,17 @@
 
 option('bitdepths',
     type: 'array',
-    choices: ['8', '16'],
+    choices: ['8'],
     description: 'Enable only specified bitdepths')
 
 option('enable_asm',
     type: 'boolean',
-    value: true,
+    value: false,
     description: 'Build asm files, if available')
 
 option('enable_tools',
     type: 'boolean',
-    value: true,
+    value: false,
     description: 'Build dav1d cli tools')
 
 option('enable_examples',
@@ -22,7 +22,7 @@ option('enable_examples',
 
 option('enable_tests',
     type: 'boolean',
-    value: true,
+    value: false,
     description: 'Build dav1d tests')
 
 option('enable_seek_stress',
@@ -37,7 +37,7 @@ option('enable_docs',
 
 option('logging',
     type: 'boolean',
-    value: true,
+    value: false,
     description: 'Print error log messages using the provided callback function')
 
 option('testdata_tests',

@@ -1,0 +1,16 @@
+[binaries]
+c = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc'
+cpp = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-g++'
+ar = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-ar'
+strip = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-strip'
+pkg-config = '/opt/devkitpro/extra_lib/lib/pkgconfig'
+windres = '/opt/devkitpro/devkitARM/bin/arm-none-eabi-windres'
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = '3ds'
+cpu_family = 'arm'
+endian = 'little'
+cpu = 'arm'

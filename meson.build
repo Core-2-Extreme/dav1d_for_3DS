@@ -27,7 +27,8 @@ project('dav1d', ['c'],
     default_options: ['c_std=c99',
                       'warning_level=2',
                       'buildtype=release',
-                      'b_ndebug=if-release'],
+                      'b_ndebug=if-release',
+                      'prefix=/opt/devkitpro/extra_lib'],
     meson_version: '>= 0.49.0')
 
 dav1d_soname_version       = '7.0.0'
@@ -140,7 +141,7 @@ if host_machine.system() == 'windows'
     rc_data.set('API_VERSION_REVISION', dav1d_api_version_revision)
     rc_data.set('COPYRIGHT_YEARS', '2018-2024')
 else
-    thread_dependency = dependency('threads')
+    thread_dependency = []
     thread_compat_dep = []
 
     rt_dependency = []
