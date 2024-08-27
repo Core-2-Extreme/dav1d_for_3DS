@@ -3160,7 +3160,21 @@ error:
     return retval;
 }
 
+//For debug graph.
+__attribute__((weak)) void dav1d_worker_task_start(const void* thread_ptr);
+__attribute__((weak)) void dav1d_worker_task_end(const void* thread_ptr);
+__attribute__((weak)) void dav1d_worker_task_start(const void* thread_ptr)
+{
+    (void)thread_ptr;
+}
+__attribute__((weak)) void dav1d_worker_task_end(const void* thread_ptr)
+{
+    (void)thread_ptr;
+}
+
 int dav1d_decode_frame_init_cdf(Dav1dFrameContext *const f) {
+    dav1d_worker_task_start(f->task_thread.ttd);
+
     const Dav1dContext *const c = f->c;
     int retval = DAV1D_ERR(EINVAL);
 
@@ -3301,6 +3315,8 @@ void dav1d_decode_frame_exit(Dav1dFrameContext *const f, int retval) {
     for (int i = 0; i < f->n_tile_data; i++)
         dav1d_data_unref_internal(&f->tile[i].data);
     f->task_thread.retval = retval;
+
+    dav1d_worker_task_end(f->task_thread.ttd);
 }
 
 int dav1d_decode_frame(Dav1dFrameContext *const f) {
