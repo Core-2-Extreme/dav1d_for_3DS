@@ -30,7 +30,7 @@ project('dav1d', ['c'],
                       'b_ndebug=if-release',
                       'prefix=/opt/devkitpro/extra_lib'],
     meson_version: '>= 0.49.0')
-add_project_link_arguments('-mfloat-abi=hard', language : 'c')
+add_project_link_arguments('-mfloat-abi=hard', '-L/opt/devkitpro/extra_lib/lib', '-specs=3dsx.specs', ' -lctru', language : 'c')
 add_project_arguments('-mfloat-abi=hard', '-mtune=mpcore', '-mtp=cp15', '-D_POSIX_THREADS', '-march=armv6k', language : 'c')
 
 dav1d_soname_version       = '7.0.0'
