@@ -2768,7 +2768,22 @@ int dav1d_decode_tile_sbrow(Dav1dTaskContext *const t) {
            check_trailing_bits_after_symbol_coder(&ts->msac);
 }
 
+//For debug graph.
+__attribute__((weak)) void dav1d_worker_task_start(const void* frame_handle);
+__attribute__((weak)) void dav1d_worker_task_end(const void* frame_handle);
+__attribute__((weak)) void dav1d_worker_task_start(const void* frame_handle)
+{
+    (void)frame_handle;
+}
+__attribute__((weak)) void dav1d_worker_task_end(const void* frame_handle)
+{
+    (void)frame_handle;
+}
+
 int dav1d_decode_frame_init(Dav1dFrameContext *const f) {
+    if(f->c->n_tc > 1)
+        dav1d_worker_task_start((const void*)f);
+
     const Dav1dContext *const c = f->c;
     int retval = DAV1D_ERR(ENOMEM);
 
@@ -3160,21 +3175,7 @@ error:
     return retval;
 }
 
-//For debug graph.
-__attribute__((weak)) void dav1d_worker_task_start(const void* thread_ptr);
-__attribute__((weak)) void dav1d_worker_task_end(const void* thread_ptr);
-__attribute__((weak)) void dav1d_worker_task_start(const void* thread_ptr)
-{
-    (void)thread_ptr;
-}
-__attribute__((weak)) void dav1d_worker_task_end(const void* thread_ptr)
-{
-    (void)thread_ptr;
-}
-
 int dav1d_decode_frame_init_cdf(Dav1dFrameContext *const f) {
-    dav1d_worker_task_start(f->task_thread.ttd);
-
     const Dav1dContext *const c = f->c;
     int retval = DAV1D_ERR(EINVAL);
 
@@ -3316,7 +3317,8 @@ void dav1d_decode_frame_exit(Dav1dFrameContext *const f, int retval) {
         dav1d_data_unref_internal(&f->tile[i].data);
     f->task_thread.retval = retval;
 
-    dav1d_worker_task_end(f->task_thread.ttd);
+    if(f->c->n_tc > 1)
+        dav1d_worker_task_end((const void*)f);
 }
 
 int dav1d_decode_frame(Dav1dFrameContext *const f) {
