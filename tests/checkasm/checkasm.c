@@ -44,11 +44,15 @@
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x04
 #endif
 #else
-#include <unistd.h>
 #include <time.h>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if HAVE_PTHREAD_SETAFFINITY_NP
 #include <pthread.h>
-#ifdef HAVE_PTHREAD_NP_H
+#if HAVE_PTHREAD_NP_H
 #include <pthread_np.h>
+#endif
 #endif
 #ifdef __APPLE__
 #include <mach/mach_time.h>
@@ -125,8 +129,6 @@ static const struct {
 
 #if ARCH_AARCH64 && HAVE_SVE
 int checkasm_sve_length(void);
-#elif ARCH_RISCV
-int checkasm_get_vlenb(void);
 #endif
 
 typedef struct CheckasmFuncVersion {
@@ -436,7 +438,6 @@ static void print_benchs(const CheckasmFunc *const f) {
     if (f) {
         print_benchs(f->child[0]);
 
-        /* Only print functions with at least one assembly version */
         const CheckasmFuncVersion *v = &f->versions;
         if (v->iterations) {
             const double baseline = avg_cycles_per_call(v);
@@ -643,7 +644,7 @@ static unsigned get_seed(void) {
     return (unsigned) mach_absolute_time();
 #else
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    clock_gettime(CLOCK_REALTIME, &ts);
     return (unsigned) (1000000000ULL * ts.tv_sec + ts.tv_nsec);
 #endif
 }
@@ -732,7 +733,7 @@ int main(int argc, char *argv[]) {
             } else {
                 fprintf(stderr, "checkasm: running on cpu %lu\n", affinity);
             }
-#elif defined(HAVE_PTHREAD_SETAFFINITY_NP) && defined(CPU_SET)
+#elif HAVE_PTHREAD_SETAFFINITY_NP && defined(CPU_SET)
             cpu_set_t set;
             CPU_ZERO(&set);
             CPU_SET(affinity, &set);
@@ -832,6 +833,14 @@ int main(int argc, char *argv[]) {
             state.simd_warmup = checkasm_warmup_avx2;
         checkasm_simd_warmup();
 #endif
+#if ARCH_ARM
+        void checkasm_checked_call_vfp(void *func, int dummy, ...);
+        void checkasm_checked_call_novfp(void *func, int dummy, ...);
+        if (cpu_flags & DAV1D_ARM_CPU_FLAG_NEON)
+            checkasm_checked_call_ptr = checkasm_checked_call_vfp;
+        else
+            checkasm_checked_call_ptr = checkasm_checked_call_novfp;
+#endif
 #if ARCH_X86
         unsigned checkasm_init_x86(char *name);
         char name[48];
@@ -841,10 +850,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "checkasm: %s (%08X) using random seed %u\n", name, cpuid, state.seed);
 #elif ARCH_RISCV
         char buf[32] = "";
-        if (cpu_flags & DAV1D_RISCV_CPU_FLAG_V) {
-            const int vlen = 8*checkasm_get_vlenb();
-            snprintf(buf, sizeof(buf), "VLEN=%i bits, ", vlen);
-        }
+        if (cpu_flags & DAV1D_RISCV_CPU_FLAG_V)
+            snprintf(buf, sizeof(buf), "VLEN=%i bits, ", dav1d_get_vlen());
         fprintf(stderr, "checkasm: %susing random seed %u\n", buf, state.seed);
 #elif ARCH_AARCH64 && HAVE_SVE
         char buf[48] = "";
@@ -1125,4 +1132,8 @@ void checkasm_simd_warmup(void)
     if (state.simd_warmup)
         state.simd_warmup();
 }
+#endif
+
+#if ARCH_ARM
+void (*checkasm_checked_call_ptr)(void *func, int dummy, ...);
 #endif
